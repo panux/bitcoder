@@ -58,10 +58,8 @@ func TestReflectCoder(t *testing.T) {
 			},
 			Iptr: pppthree,
 		},
-		struct {
-			B bool
-		}{
-			B: false,
+		map[rune]uint{
+			'B': uint(0),
 		},
 	)
 	if expected != actual {
