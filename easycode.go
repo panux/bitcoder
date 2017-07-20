@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"unicode"
 )
 
 //EasyCoder is a bitcoder that uses type switches and/or reflection to get values
@@ -97,6 +98,27 @@ func NewEasyCoder(code string) EasyCoder {
 				case reflect.Ptr:
 					vv = vv.Elem() //Dereference
 					goto kloop
+				case reflect.Map:
+					for _, key := range vv.MapKeys() {
+						k := key.Interface()
+						value := vv.MapIndex(key).Interface()
+						var kl rune
+					mtswitch:
+						switch k.(type) {
+						case string:
+							k = []rune(k.(string))[0]
+							goto mtswitch
+						case rune:
+							kl = unicode.ToUpper(k.(rune))
+						default:
+							panic(fmt.Errorf("Invalid key type for map value %q", k))
+						}
+						if !alst[kl] {
+							panic(fmt.Errorf("Invalid key rune %q", k.(rune)))
+						}
+						dmap[kl] = value
+						delete(alst, kl)
+					}
 				case reflect.Struct:
 					nf := vv.NumField()
 					vt := vv.Type()
@@ -184,6 +206,6 @@ func NewEasyCoder(code string) EasyCoder {
 			}
 			return fast(ar...)
 		}
-		panic(errors.New("This should never happen"))
+		panic(errors.New("This will never happen"))
 	}
 }
