@@ -40,11 +40,12 @@ type flagtest struct {
 type reftest struct {
 	Flags flagtest `bitpack:"1ABC"`
 	Iptr  ***int
+	J     map[rune]int `bitpack:"XYZ1"`
 }
 
 func TestReflectCoder(t *testing.T) {
-	code := "FFFFIIB0"
-	expected := NewFastCoder("10101100")()
+	code := "FFFFIIB0JJJJ"
+	expected := NewFastCoder("101011001111")()
 	three := 3
 	pthree := &three
 	ppthree := &pthree
@@ -57,6 +58,11 @@ func TestReflectCoder(t *testing.T) {
 				C: false,
 			},
 			Iptr: pppthree,
+			J: map[rune]int{
+				'X': 1,
+				'Y': 1,
+				'Z': 1,
+			},
 		},
 		map[string]uint{
 			"b": uint(0),
@@ -137,6 +143,66 @@ func TestErrNegInt64(t *testing.T) {
 	v.E = -1
 	errtest(t, "negint64", "Negative argument", func() {
 		valstest(v)
+	})
+}
+
+func TestErrInconsistentVM(t *testing.T) {
+	errtest(t, "inconsistent-value-map", "easyclass inconsistency", func() {
+		NewEasyCoder("")(1, struct{}{})
+	})
+}
+func TestErrInconsistentMV(t *testing.T) {
+	errtest(t, "inconsistent-map-value", "easyclass inconsistency", func() {
+		NewEasyCoder("")(struct{}{}, 1)
+	})
+}
+func TestErrNothing(t *testing.T) {
+	errtest(t, "nothing", "No bitpack arguments", func() {
+		NewEasyCoder("A")()
+	})
+}
+
+func TestErrInvalidMap(t *testing.T) {
+	errtest(t, "bad-map-key", "Invalid key type for map value '\\x01'", func() { //Meh, this is OK
+		NewEasyCoder("A")(map[int]int{1: 1})
+	})
+}
+func TestErrInvalidMapRune(t *testing.T) {
+	errtest(t, "bad-map-rune", "Invalid key rune 'B'", func() { //Meh, this is OK
+		NewEasyCoder("A")(map[rune]int{'B': 1})
+	})
+}
+func TestErrInvalidVal(t *testing.T) {
+	v := vals
+	vtest := NewEasyCoder("abcdefghjk")
+	errtest(t, "invalid-val", "bitpack field 'I' (\"I\") already filled/not present", func() {
+		vtest(v)
+	})
+}
+func TestErrMissingTag(t *testing.T) {
+	errtest(t, "missing-tag", "Substruct without corresponding bitpack", func() {
+		NewEasyCoder("A")(struct{ A struct{} }{A: struct{}{}})
+	})
+}
+func TestErrMissingValue(t *testing.T) {
+	errtest(t, "missing-value", "Missed inputs: \"A\"", func() {
+		NewEasyCoder("A")(struct{}{})
+	})
+}
+
+func TestTooMany(t *testing.T) {
+	errtest(t, "too-many", "Too many args to FastCoder", func() {
+		NewFastCoder("A")(1, 2)
+	})
+}
+func TestTooFew(t *testing.T) {
+	errtest(t, "too-few", "Too few args to FastCoder", func() {
+		NewFastCoder("AB")(1)
+	})
+}
+func TestOversize(t *testing.T) {
+	errtest(t, "oversize-arg", "Oversized argument 0 - should be 1 bits but is 1 bits", func() {
+		NewFastCoder("A")(2)
 	})
 }
 

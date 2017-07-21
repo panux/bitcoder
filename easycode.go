@@ -140,7 +140,7 @@ func NewEasyCoder(code string) EasyCoder {
 						case reflect.Struct:
 							bp := f.Tag.Get("bitpack") //sub-pack maps/structs
 							if bp == "" {
-								panic("Substruct without corresponding bitpack")
+								panic(errors.New("Substruct without corresponding bitpack"))
 							}
 							dmap[fl] = NewEasyCoder(bp)(vv.FieldByIndex(f.Index).Interface())
 						default:
