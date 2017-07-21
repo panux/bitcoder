@@ -206,6 +206,17 @@ func TestOversize(t *testing.T) {
 	})
 }
 
+func TestOver64(t *testing.T) {
+	errtest(t, "oversize-bitpack", "Bitpacking code must be less than 64 bits", func() {
+		decode("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+	})
+}
+func TestIllegalRune(t *testing.T) {
+	errtest(t, "illegal-rune", "Illegal character ';' in bitpacking code", func() {
+		decode(";")
+	})
+}
+
 func errtest(t *testing.T, name string, goal string, f func()) {
 	tst := testerr(f)
 	if tst == nil {
