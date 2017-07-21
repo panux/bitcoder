@@ -26,7 +26,8 @@ func NewEasyCoder(code string) EasyCoder {
 	code = strings.ToUpper(code)
 	_, args := decode(code)
 	fast := NewFastCoder(code)
-	return func(dat ...interface{}) (r uint64) {
+	var coder EasyCoder
+	coder = func(dat ...interface{}) (r uint64) {
 		//Identify easyclass
 		class := classNone
 		for _, v := range dat {
@@ -164,7 +165,7 @@ func NewEasyCoder(code string) EasyCoder {
 			for i, a := range args {
 				dat[i] = dmap[a.letter]
 			}
-			fallthrough
+			return coder(dat...)
 		case classVals:
 			ar := make([]uint64, len(args))
 			for i, v := range dat {
@@ -208,4 +209,5 @@ func NewEasyCoder(code string) EasyCoder {
 		}
 		panic(errors.New("This will never happen"))
 	}
+	return coder
 }
